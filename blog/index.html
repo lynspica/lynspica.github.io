@@ -9,47 +9,79 @@
     .then(data => {
       const container = document.getElementById('substack-feed-list');
       const posts = data.items;
-      
-      // Clear "Loading..." message
       container.innerHTML = '';
 
       posts.forEach(post => {
-        // --- 1. Create the List Item (li) ---
+        // 1. EXTRACT IMAGE (Thumbnail or First Image in Content)
+        let imageUrl = post.thumbnail; // rss2json tries to find it here first
+        
+        // If empty, try to find an image tag in the content
+        if (!imageUrl || imageUrl.length === 0) {
+           const imgMatch = post.content.match(/<img[^>]+src="([^">]+)"/);
+           if (imgMatch) {
+             imageUrl = imgMatch[1];
+           }
+        }
+
+        // 2. CREATE THE CARD STRUCTURE (Bootstrap Grid)
         const listItem = document.createElement('li');
         listItem.style.marginBottom = "40px";
+        
+        const rowDiv = document.createElement('div');
+        rowDiv.className = "row"; // Bootstrap row
 
-        // --- 2. Create Title (h3 > a) ---
+        // 3. CREATE TEXT COLUMN (col-sm-9 if image exists, else col-sm-12)
+        const textCol = document.createElement('div');
+        textCol.className = imageUrl ? "col-sm-9" : "col-sm-12";
+
+        // -- Title
         const titleHeader = document.createElement('h3');
         const titleLink = document.createElement('a');
-        titleLink.className = "post-title"; // Uses theme's native CSS class
+        titleLink.className = "post-title";
         titleLink.href = post.link;
         titleLink.target = "_blank";
         titleLink.innerText = post.title;
         titleHeader.appendChild(titleLink);
 
-        // --- 3. Create Description (p) ---
+        // -- Description/Subtitle
         const desc = document.createElement('p');
-        // Clean up HTML tags from description for a clean preview
+        // Strip HTML to get clean text for the subtitle
         const cleanDesc = post.description.replace(/<[^>]*>?/gm, '').substring(0, 200) + "...";
         desc.innerText = cleanDesc;
 
-        // --- 4. Create Meta Data (Date | Source) ---
+        // -- Meta Data
         const meta = document.createElement('p');
-        meta.className = "post-meta"; // Uses theme's native CSS class
-        
-        // Calculate read time (rough estimate)
+        meta.className = "post-meta";
         const readTime = Math.ceil(cleanDesc.length / 200); 
         const dateObj = new Date(post.pubDate);
         const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        
         meta.innerHTML = `${readTime} min read &nbsp; &middot; &nbsp; ${dateStr} &nbsp; &middot; &nbsp; Substack`;
 
-        // --- 5. Assemble the card ---
-        listItem.appendChild(titleHeader);
-        listItem.appendChild(desc);
-        listItem.appendChild(meta);
+        // Add elements to text column
+        textCol.appendChild(titleHeader);
+        textCol.appendChild(desc);
+        textCol.appendChild(meta);
+        rowDiv.appendChild(textCol);
 
-        // --- 6. Add to page ---
+        // 4. CREATE IMAGE COLUMN (col-sm-3) - Only if image found
+        if (imageUrl) {
+          const imgCol = document.createElement('div');
+          imgCol.className = "col-sm-3";
+          
+          const img = document.createElement('img');
+          img.className = "card-img";
+          img.src = imageUrl;
+          img.style.objectFit = "cover";
+          img.style.height = "100%";
+          img.style.borderRadius = "4px"; // Rounded corners style
+          img.alt = "Post image";
+
+          imgCol.appendChild(img);
+          rowDiv.appendChild(imgCol);
+        }
+
+        // 5. ASSEMBLE
+        listItem.appendChild(rowDiv);
         container.appendChild(listItem);
       });
     })
