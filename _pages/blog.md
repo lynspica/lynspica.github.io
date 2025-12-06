@@ -17,8 +17,8 @@ nav_order: 1
   {% endif %}
 
   <div class="clearfix">
-    <p style="margin-bottom: 20px;">
-      Latest notes from <a href="https://lynspica.substack.com" target="_blank">lynspica.substack.com</a>
+    <p style="margin-bottom: 30px; font-style: italic;">
+      Writing from <a href="https://lynspica.substack.com" target="_blank" style="text-decoration: underline;">lynspica.substack.com</a>
     </p>
   </div>
 
@@ -37,83 +37,45 @@ nav_order: 1
     .then(data => {
       const container = document.getElementById('substack-feed-list');
       const posts = data.items;
+      
+      // Clear "Loading..." message
       container.innerHTML = '';
 
       posts.forEach(post => {
-        // --- 1. EXTRACT IMAGE (Improved) ---
-        let imageUrl = post.thumbnail; 
-        
-        // If no thumbnail, check the "enclosure" (Standard RSS location for cover images)
-        if (!imageUrl && post.enclosure && post.enclosure.link) {
-          imageUrl = post.enclosure.link;
-        }
-
-        // If still empty, try to find an image tag in the content
-        if (!imageUrl) {
-           const imgMatch = post.content.match(/<img[^>]+src="([^">]+)"/);
-           if (imgMatch) {
-             imageUrl = imgMatch[1];
-           }
-        }
-
-        // --- 2. CREATE THE CARD STRUCTURE ---
+        // --- CREATE LIST ITEM ---
         const listItem = document.createElement('li');
-        listItem.style.marginBottom = "40px";
-        
-        const rowDiv = document.createElement('div');
-        rowDiv.className = "row"; 
+        listItem.style.marginBottom = "50px"; // Nice spacing between posts
 
-        // --- 3. CREATE TEXT COLUMN ---
-        // If image exists, text takes 9 columns. If not, it takes 12 (full width).
-        const textCol = document.createElement('div');
-        textCol.className = imageUrl ? "col-sm-9" : "col-sm-12";
-
-        // Title
+        // --- TITLE ---
         const titleHeader = document.createElement('h3');
         const titleLink = document.createElement('a');
-        titleLink.className = "post-title";
+        titleLink.className = "post-title"; 
         titleLink.href = post.link;
         titleLink.target = "_blank";
         titleLink.innerText = post.title;
         titleHeader.appendChild(titleLink);
 
-        // Description
+        // --- DESCRIPTION ---
         const desc = document.createElement('p');
-        const cleanDesc = post.description.replace(/<[^>]*>?/gm, '').substring(0, 200) + "...";
+        // Clean up HTML tags and limit length for a tidy look
+        const cleanDesc = post.description.replace(/<[^>]*>?/gm, '').substring(0, 280) + "...";
         desc.innerText = cleanDesc;
+        desc.style.marginTop = "10px";
 
-        // Meta Data
+        // --- METADATA (Date | Read Time) ---
         const meta = document.createElement('p');
         meta.className = "post-meta";
+        
         const readTime = Math.ceil(cleanDesc.length / 200); 
         const dateObj = new Date(post.pubDate);
         const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        
         meta.innerHTML = `${readTime} min read &nbsp; &middot; &nbsp; ${dateStr} &nbsp; &middot; &nbsp; Substack`;
 
-        textCol.appendChild(titleHeader);
-        textCol.appendChild(desc);
-        textCol.appendChild(meta);
-        rowDiv.appendChild(textCol);
-
-        // --- 4. CREATE IMAGE COLUMN (Only if image found) ---
-        if (imageUrl) {
-          const imgCol = document.createElement('div');
-          imgCol.className = "col-sm-3";
-          
-          const img = document.createElement('img');
-          img.className = "card-img";
-          img.src = imageUrl;
-          img.style.objectFit = "cover";
-          img.style.height = "100%";
-          img.style.borderRadius = "4px"; 
-          img.alt = "Post image";
-
-          imgCol.appendChild(img);
-          rowDiv.appendChild(imgCol);
-        }
-
-        // --- 5. ASSEMBLE ---
-        listItem.appendChild(rowDiv);
+        // --- ASSEMBLE ---
+        listItem.appendChild(titleHeader);
+        listItem.appendChild(desc);
+        listItem.appendChild(meta);
         container.appendChild(listItem);
       });
     })
