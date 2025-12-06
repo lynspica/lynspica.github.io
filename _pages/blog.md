@@ -17,13 +17,13 @@ nav_order: 1
   {% endif %}
 
   <div class="clearfix">
-    <p style="margin-bottom: 40px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+    <p style="margin-bottom: 40px; font-style: italic; border-bottom: 1px solid var(--global-divider-color); padding-bottom: 20px;">
       Writing from <a href="https://lynspica.substack.com" target="_blank" style="text-decoration: underline;">lynspica.substack.com</a>
     </p>
   </div>
 
   <ul class="post-list" id="substack-feed-list">
-    <p>Loading latest posts...</p>
+    <p>Loading posts...</p>
   </ul>
 
 </div>
@@ -41,7 +41,6 @@ nav_order: 1
       container.innerHTML = '';
 
       posts.forEach(post => {
-        // --- Create List Item ---
         const listItem = document.createElement('li');
         listItem.style.marginBottom = "50px"; 
 
@@ -52,30 +51,37 @@ nav_order: 1
         titleLink.href = post.link;
         titleLink.target = "_blank";
         titleLink.innerText = post.title;
-        titleLink.style.textDecoration = "none";
+        // Removed manual styling so it uses theme default (bright)
         titleHeader.appendChild(titleLink);
 
-        // --- Description (Smart Cut) ---
-        // 1. Prefer content (full body) over description to ensure we have enough text
-        let rawText = post.content || post.description;
-        
-        // 2. Strip HTML tags
-        let cleanText = rawText.replace(/<[^>]*>?/gm, '');
+        // --- Description (Clean Logic) ---
+        let cleanText = post.description;
 
-        // 3. Smart Truncate to 450 chars
+        // Fallback to content if description is empty
+        if (!cleanText || cleanText.length < 5) {
+           cleanText = post.content || "";
+        }
+        
+        // 1. Strip HTML tags
+        cleanText = cleanText.replace(/<[^>]*>?/gm, '');
+        
+        // 2. REMOVE SUBSTACK BUTTON TEXT (The Fix)
+        cleanText = cleanText.replace(/Leave a comment/g, "");
+        cleanText = cleanText.replace(/Subscribe now/g, "");
+        cleanText = cleanText.replace(/Share/g, "");
+
+        // 3. Truncate
         if (cleanText.length > 450) {
-          // Cut at 450
           cleanText = cleanText.substring(0, 450);
-          // Back up to the last space to avoid cutting a word in half
           cleanText = cleanText.substring(0, cleanText.lastIndexOf(" ")) + "...";
         }
 
         const desc = document.createElement('p');
-        desc.innerText = cleanText;
+        desc.innerText = cleanText.trim();
         desc.style.marginTop = "10px";
         desc.style.lineHeight = "1.6";
-        desc.style.color = "#444";
-
+        // Removed 'color: #444' so it inherits the theme's text color
+        
         // --- Metadata ---
         const meta = document.createElement('p');
         meta.className = "post-meta";
@@ -85,7 +91,6 @@ nav_order: 1
         
         meta.innerHTML = `${readTime} min read &nbsp; &middot; &nbsp; ${dateStr} &nbsp; &middot; &nbsp; Substack`;
 
-        // --- Assemble ---
         listItem.appendChild(titleHeader);
         listItem.appendChild(desc);
         listItem.appendChild(meta);
