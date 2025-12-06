@@ -40,29 +40,35 @@ nav_order: 1
       container.innerHTML = '';
 
       posts.forEach(post => {
-        // 1. EXTRACT IMAGE (Thumbnail or First Image in Content)
-        let imageUrl = post.thumbnail; // rss2json tries to find it here first
+        // --- 1. EXTRACT IMAGE (Improved) ---
+        let imageUrl = post.thumbnail; 
         
-        // If empty, try to find an image tag in the content
-        if (!imageUrl || imageUrl.length === 0) {
+        // If no thumbnail, check the "enclosure" (Standard RSS location for cover images)
+        if (!imageUrl && post.enclosure && post.enclosure.link) {
+          imageUrl = post.enclosure.link;
+        }
+
+        // If still empty, try to find an image tag in the content
+        if (!imageUrl) {
            const imgMatch = post.content.match(/<img[^>]+src="([^">]+)"/);
            if (imgMatch) {
              imageUrl = imgMatch[1];
            }
         }
 
-        // 2. CREATE THE CARD STRUCTURE (Bootstrap Grid)
+        // --- 2. CREATE THE CARD STRUCTURE ---
         const listItem = document.createElement('li');
         listItem.style.marginBottom = "40px";
         
         const rowDiv = document.createElement('div');
-        rowDiv.className = "row"; // Bootstrap row
+        rowDiv.className = "row"; 
 
-        // 3. CREATE TEXT COLUMN (col-sm-9 if image exists, else col-sm-12)
+        // --- 3. CREATE TEXT COLUMN ---
+        // If image exists, text takes 9 columns. If not, it takes 12 (full width).
         const textCol = document.createElement('div');
         textCol.className = imageUrl ? "col-sm-9" : "col-sm-12";
 
-        // -- Title
+        // Title
         const titleHeader = document.createElement('h3');
         const titleLink = document.createElement('a');
         titleLink.className = "post-title";
@@ -71,13 +77,12 @@ nav_order: 1
         titleLink.innerText = post.title;
         titleHeader.appendChild(titleLink);
 
-        // -- Description/Subtitle
+        // Description
         const desc = document.createElement('p');
-        // Strip HTML to get clean text for the subtitle
         const cleanDesc = post.description.replace(/<[^>]*>?/gm, '').substring(0, 200) + "...";
         desc.innerText = cleanDesc;
 
-        // -- Meta Data
+        // Meta Data
         const meta = document.createElement('p');
         meta.className = "post-meta";
         const readTime = Math.ceil(cleanDesc.length / 200); 
@@ -85,13 +90,12 @@ nav_order: 1
         const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         meta.innerHTML = `${readTime} min read &nbsp; &middot; &nbsp; ${dateStr} &nbsp; &middot; &nbsp; Substack`;
 
-        // Add elements to text column
         textCol.appendChild(titleHeader);
         textCol.appendChild(desc);
         textCol.appendChild(meta);
         rowDiv.appendChild(textCol);
 
-        // 4. CREATE IMAGE COLUMN (col-sm-3) - Only if image found
+        // --- 4. CREATE IMAGE COLUMN (Only if image found) ---
         if (imageUrl) {
           const imgCol = document.createElement('div');
           imgCol.className = "col-sm-3";
@@ -101,14 +105,14 @@ nav_order: 1
           img.src = imageUrl;
           img.style.objectFit = "cover";
           img.style.height = "100%";
-          img.style.borderRadius = "4px"; // Rounded corners style
+          img.style.borderRadius = "4px"; 
           img.alt = "Post image";
 
           imgCol.appendChild(img);
           rowDiv.appendChild(imgCol);
         }
 
-        // 5. ASSEMBLE
+        // --- 5. ASSEMBLE ---
         listItem.appendChild(rowDiv);
         container.appendChild(listItem);
       });
