@@ -23,7 +23,7 @@ nav_order: 1
   </div>
 
   <ul class="post-list" id="substack-feed-list">
-    <p>Loading posts...</p>
+    <p>Loading latest posts...</p>
   </ul>
 
 </div>
@@ -38,7 +38,6 @@ nav_order: 1
       const container = document.getElementById('substack-feed-list');
       const posts = data.items;
       
-      // Clear "Loading..." message
       container.innerHTML = '';
 
       posts.forEach(post => {
@@ -56,18 +55,23 @@ nav_order: 1
         titleLink.style.textDecoration = "none";
         titleHeader.appendChild(titleLink);
 
-        // --- Description (Body Snippet) ---
-        // Since Substack doesn't send the subtitle, we take the first 250 chars of the body
-        const desc = document.createElement('p');
-        // 1. Strip HTML tags
-        let cleanDesc = post.description.replace(/<[^>]*>?/gm, '');
+        // --- Description (Smart Cut) ---
+        // 1. Prefer content (full body) over description to ensure we have enough text
+        let rawText = post.content || post.description;
+        
+        // 2. Strip HTML tags
+        let cleanText = rawText.replace(/<[^>]*>?/gm, '');
 
-        // 2. Cut to 400 chars, but back up to the last space so we don't chop a word
-        if (cleanDesc.length > 400) {
-          cleanDesc = cleanDesc.substring(0, 400);
-          cleanDesc = cleanDesc.substring(0, cleanDesc.lastIndexOf(" ")) + "...";
-        }        
-        desc.innerText = cleanDesc;
+        // 3. Smart Truncate to 450 chars
+        if (cleanText.length > 450) {
+          // Cut at 450
+          cleanText = cleanText.substring(0, 450);
+          // Back up to the last space to avoid cutting a word in half
+          cleanText = cleanText.substring(0, cleanText.lastIndexOf(" ")) + "...";
+        }
+
+        const desc = document.createElement('p');
+        desc.innerText = cleanText;
         desc.style.marginTop = "10px";
         desc.style.lineHeight = "1.6";
         desc.style.color = "#444";
@@ -75,7 +79,7 @@ nav_order: 1
         // --- Metadata ---
         const meta = document.createElement('p');
         meta.className = "post-meta";
-        const readTime = Math.ceil(cleanDesc.length / 200); 
+        const readTime = Math.ceil(cleanText.length / 200); 
         const dateObj = new Date(post.pubDate);
         const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         
