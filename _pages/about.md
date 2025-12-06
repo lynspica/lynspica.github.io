@@ -57,10 +57,16 @@ nav_order: 1
         titleHeader.appendChild(titleLink);
 
         // --- Description (Body Snippet) ---
-        // Since Substack doesn't send the subtitle, we take the first 250 chars of the body
+        // Since Substack doesn't send the subtitle, we take the first 400 chars of the body
         const desc = document.createElement('p');
-        const cleanDesc = post.description.replace(/<[^>]*>?/gm, '').substring(0, 250) + "...";
-        desc.innerText = cleanDesc;
+        // 1. Strip HTML tags
+        let cleanDesc = post.description.replace(/<[^>]*>?/gm, '');
+
+        // 2. Cut to 400 chars, but back up to the last space so we don't chop a word
+        if (cleanDesc.length > 400) {
+          cleanDesc = cleanDesc.substring(0, 400);
+          cleanDesc = cleanDesc.substring(0, cleanDesc.lastIndexOf(" ")) + "...";
+        }        desc.innerText = cleanDesc;
         desc.style.marginTop = "10px";
         desc.style.lineHeight = "1.6";
         desc.style.color = "#444";
