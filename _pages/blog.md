@@ -17,7 +17,7 @@ nav_order: 1
   {% endif %}
 
   <div class="clearfix">
-    <p style="margin-bottom: 30px; font-style: italic;">
+    <p style="margin-bottom: 40px; font-style: italic; border-bottom: 1px solid #eee; padding-bottom: 20px;">
       Writing from <a href="https://lynspica.substack.com" target="_blank" style="text-decoration: underline;">lynspica.substack.com</a>
     </p>
   </div>
@@ -42,37 +42,46 @@ nav_order: 1
       container.innerHTML = '';
 
       posts.forEach(post => {
-        // --- CREATE LIST ITEM ---
+        // --- Create List Item ---
         const listItem = document.createElement('li');
-        listItem.style.marginBottom = "50px"; // Nice spacing between posts
+        listItem.style.marginBottom = "50px"; 
 
-        // --- TITLE ---
+        // --- Title ---
         const titleHeader = document.createElement('h3');
         const titleLink = document.createElement('a');
         titleLink.className = "post-title"; 
         titleLink.href = post.link;
         titleLink.target = "_blank";
         titleLink.innerText = post.title;
+        titleLink.style.textDecoration = "none";
         titleHeader.appendChild(titleLink);
 
-        // --- DESCRIPTION ---
+        // --- Description (Body Snippet) ---
+        // Since Substack doesn't send the subtitle, we take the first 250 chars of the body
         const desc = document.createElement('p');
-        // Clean up HTML tags and limit length for a tidy look
-        const cleanDesc = post.description.replace(/<[^>]*>?/gm, '').substring(0, 280) + "...";
+        // 1. Strip HTML tags
+        let cleanDesc = post.description.replace(/<[^>]*>?/gm, '');
+
+        // 2. Cut to 400 chars, but back up to the last space so we don't chop a word
+        if (cleanDesc.length > 400) {
+          cleanDesc = cleanDesc.substring(0, 400);
+          cleanDesc = cleanDesc.substring(0, cleanDesc.lastIndexOf(" ")) + "...";
+        }        
         desc.innerText = cleanDesc;
         desc.style.marginTop = "10px";
+        desc.style.lineHeight = "1.6";
+        desc.style.color = "#444";
 
-        // --- METADATA (Date | Read Time) ---
+        // --- Metadata ---
         const meta = document.createElement('p');
         meta.className = "post-meta";
-        
         const readTime = Math.ceil(cleanDesc.length / 200); 
         const dateObj = new Date(post.pubDate);
         const dateStr = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         
         meta.innerHTML = `${readTime} min read &nbsp; &middot; &nbsp; ${dateStr} &nbsp; &middot; &nbsp; Substack`;
 
-        // --- ASSEMBLE ---
+        // --- Assemble ---
         listItem.appendChild(titleHeader);
         listItem.appendChild(desc);
         listItem.appendChild(meta);
