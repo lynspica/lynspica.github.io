@@ -30,7 +30,8 @@ nav_order: 1
 
 <script>
   const substackUrl = "https://lynspica.substack.com/feed";
-  const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${substackUrl}`;
+  // The "&t=" part forces the browser to fetch a fresh copy every time
+  const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${substackUrl}&t=${new Date().getTime()}`;
 
   fetch(apiUrl)
     .then(response => response.json())
@@ -51,7 +52,6 @@ nav_order: 1
         titleLink.href = post.link;
         titleLink.target = "_blank";
         titleLink.innerText = post.title;
-        // Removed manual styling so it uses theme default (bright)
         titleHeader.appendChild(titleLink);
 
         // --- Description (Clean Logic) ---
@@ -65,7 +65,7 @@ nav_order: 1
         // 1. Strip HTML tags
         cleanText = cleanText.replace(/<[^>]*>?/gm, '');
         
-        // 2. REMOVE SUBSTACK BUTTON TEXT (The Fix)
+        // 2. Remove Substack buttons
         cleanText = cleanText.replace(/Leave a comment/g, "");
         cleanText = cleanText.replace(/Subscribe now/g, "");
         cleanText = cleanText.replace(/Share/g, "");
@@ -80,7 +80,6 @@ nav_order: 1
         desc.innerText = cleanText.trim();
         desc.style.marginTop = "10px";
         desc.style.lineHeight = "1.6";
-        // Removed 'color: #444' so it inherits the theme's text color
         
         // --- Metadata ---
         const meta = document.createElement('p');
